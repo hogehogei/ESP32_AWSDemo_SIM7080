@@ -22,7 +22,7 @@ public:
     /// @brief  Try lock mutex
     /// @param  block_time  LockMutex blocking time.
     /// @return true if succeeded, otherwise false.
-    bool TryLock( portTickType block_time = portMAX_DELAY );
+    bool TryLock( uint32_t block_time = portMAX_DELAY );
     
     /// @brief  Unlock mutex
     void Unlock();
@@ -33,8 +33,8 @@ public:
 
 private:
 
-    xSemaphoreHandle  m_Mutex;
-    BaseType_t        m_IsLocked;
+    SemaphoreHandle_t  m_Mutex;
+    BaseType_t         m_IsLocked;
 };
 
 /// @brief  Mutex utility for "scoped locking pattern"
@@ -65,11 +65,11 @@ class MutexValue
 public:
 
     MutexValue()
-        : m_Mutex()
+        : mutex()
     {}
     MutexValue( const T& initial_value )
-        : m_Mutex(),
-          m_Value( initial_value )
+        : mutex(),
+          value( initial_value )
     {}
     ~MutexValue()
     {}
@@ -78,33 +78,31 @@ public:
     MutexValue( Mutex& ) = delete;
     MutexValue& operator=( Mutex& ) = delete;
 
-    MutexValue& operator=( const T& value )
+    MutexValue& operator=( const T& t )
     {
-        m_Mutex.TryLock();
-        m_Value = value;
-        m_Mutex.Unlock();
+        mutex.TryLock();
+        value = t;
+        mutex.Unlock();
 
         return *this;
     }
 
     bool IsValid() const
     {
-        return m_Mutex.IsValid();
+        return mutex.IsValid();
     }
 
-    T Get()
+    T Get() const
     {
-        m_Mutex.TryLock();
-        T value = m_Value;
-        m_Mutex.Unlock();
+        mutex.TryLock();
+        T ret = value;
+        mutex.Unlock();
 
-        return value;
+        return ret;
     }
 
-private:
-
-    Mutex m_Mutex;
-    T     m_Value;
+    mutable Mutex mutex;
+    T value;
 };  
 
 

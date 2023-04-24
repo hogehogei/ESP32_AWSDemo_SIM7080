@@ -6,12 +6,15 @@ Mutex::Mutex()
 {}
 
 Mutex::~Mutex()
-{}
-
-bool Mutex::TryLock( portTickType block_time )
 {
-    if( m_Mutex == NULL )
-    {
+    if( m_Mutex != nullptr ){
+        vSemaphoreDelete( m_Mutex );
+    }
+}
+
+bool Mutex::TryLock( uint32_t block_time )
+{
+    if( m_Mutex == nullptr ){
         return false;
     }
 
@@ -22,7 +25,9 @@ bool Mutex::TryLock( portTickType block_time )
 
 void Mutex::Unlock()
 {
-    if(( m_Mutex != NULL ) 
+    // すでにロックが取れているはずなので、m_IsLocked へのアクセスは競合しない
+    // もしロックが取れていない場合、m_IsLocked への書き換えは発生しないので、データ競合は発生しない。
+    if(( m_Mutex != nullptr ) 
      &&( m_IsLocked == pdTRUE ))
     {
         m_IsLocked = pdFALSE;
@@ -32,7 +37,7 @@ void Mutex::Unlock()
 
 bool Mutex::IsValid() const
 {
-    return m_Mutex != NULL;
+    return m_Mutex != nullptr;
 }
 
 

@@ -1,47 +1,216 @@
 menu "Example Configuration"
-
-    config ESP_WIFI_SSID
-        string "WiFi SSID"
-        default "myssid"
+    config EXAMPLE_MODEM_PPP_APN
+        string "Set MODEM APN"
+        default "internet"
         help
-            SSID (network name) for the example to connect to.
+            Set APN (Access Point Name), a logical name to choose data network
 
-    config ESP_WIFI_PASSWORD
-        string "WiFi Password"
-        default "mypassword"
+    config EXAMPLE_MODEM_PPP_AUTH_USERNAME
+        string "Set username for authentication"
+        default "espressif"
+        depends on !EXAMPLE_MODEM_PPP_AUTH_NONE
         help
-            WiFi password (WPA or WPA2) for the example to use.
+            Set username for PPP Authentication.
 
-    config ESP_MAXIMUM_RETRY
-        int "Maximum retry"
+    config EXAMPLE_MODEM_PPP_AUTH_PASSWORD
+        string "Set password for authentication"
+        default "esp32"
+        depends on !EXAMPLE_MODEM_PPP_AUTH_NONE
+        help
+            Set password for PPP Authentication.
+
+    config EXAMPLE_MODEM_PPP_AUTH_NONE
+        bool "Skip PPP authentication"
+        default n
+        help
+            Set to true for the PPP client to skip authentication
+
+    config EXAMPLE_SEND_MSG
+        bool "Short message (SMS)"
+        default n
+        help
+            Select this, the modem will send a short message before power off.
+
+    if EXAMPLE_SEND_MSG
+        config EXAMPLE_SEND_MSG_PEER_PHONE_NUMBER
+            string "Peer Phone Number (with area code)"
+            default "+8610086"
+            help
+                Enter the peer phone number that you want to send message to.
+    endif
+
+    config EXAMPLE_NEED_SIM_PIN
+        bool "SIM PIN needed"
+        default n
+        help
+            Enable to set SIM PIN before starting the example
+
+    config EXAMPLE_SIM_PIN
+        string "Set SIM PIN"
+        default "1234"
+        depends on EXAMPLE_NEED_SIM_PIN
+        help
+            Pin to unlock the SIM
+
+    menu "UART Configuration"
+        config EXAMPLE_MODEM_UART_TX_PIN
+            int "TXD Pin Number"
+            default 25
+            range 0 31
+            help
+                Pin number of UART TX.
+
+        config EXAMPLE_MODEM_UART_RX_PIN
+            int "RXD Pin Number"
+            default 26
+            range 0 31
+            help
+                Pin number of UART RX.
+
+        config EXAMPLE_MODEM_UART_RTS_PIN
+            int "RTS Pin Number"
+            default 27
+            range 0 31
+            help
+                Pin number of UART RTS.
+
+        config EXAMPLE_MODEM_UART_CTS_PIN
+            int "CTS Pin Number"
+            default 23
+            range 0 31
+            help
+                Pin number of UART CTS.
+
+        config EXAMPLE_MODEM_UART_EVENT_TASK_STACK_SIZE
+            int "UART Event Task Stack Size"
+            range 2000 6000
+            default 2048
+            help
+                Stack size of UART event task.
+
+        config EXAMPLE_MODEM_UART_EVENT_TASK_PRIORITY
+            int "UART Event Task Priority"
+            range 3 22
+            default 5
+            help
+                Priority of UART event task.
+
+        config EXAMPLE_MODEM_UART_EVENT_QUEUE_SIZE
+            int "UART Event Queue Size"
+            range 10 40
+            default 30
+            help
+                Length of UART event queue.
+
+        config EXAMPLE_MODEM_UART_PATTERN_QUEUE_SIZE
+            int "UART Pattern Queue Size"
+            range 10 40
+            default 20
+            help
+                Length of UART pattern queue.
+
+        config EXAMPLE_MODEM_UART_TX_BUFFER_SIZE
+            int "UART TX Buffer Size"
+            range 256 2048
+            default 512
+            help
+                Buffer size of UART TX buffer.
+
+        config EXAMPLE_MODEM_UART_RX_BUFFER_SIZE
+            int "UART RX Buffer Size"
+            range 256 2048
+            default 1024
+            help
+                Buffer size of UART RX buffer.
+
+        choice EXAMPLE_FLOW_CONTROL
+            bool "Set preferred modem control flow"
+            default EXAMPLE_FLOW_CONTROL_NONE
+            help
+                Set the modem's preferred control flow
+
+            config EXAMPLE_FLOW_CONTROL_NONE
+                bool "No control flow"
+            config EXAMPLE_FLOW_CONTROL_SW
+                bool "SW control flow"
+            config EXAMPLE_FLOW_CONTROL_HW
+                bool "HW control flow"
+        endchoice
+    endmenu
+
+    menu "AWS Configuration"
+        config AWS_BACKOFF_BASE_WAIT_DEFAULT_MS
+        int "AWS exponential backoff algorithm default time [ms]"
+        default 500
+        help
+            The base back-off delay (in milliseconds) to use for connection retry attempts.
+
+        config AWS_BACKOFF_MAX_WAIT_DEFAULT_MS
+        int "AWS exponential backoff algorithm max time [ms]"
+        default 5000
+        help
+            The maximum back-off delay (in milliseconds) for retrying connection to server.
+        
+        config AWS_BACKOFF_MAX_ATTEMPT
+        int "AWS exponential backoff max retry"
         default 5
         help
-            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+            The maximum number of retries for connecting to server.
 
-    choice ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD
-        prompt "WiFi Scan auth mode threshold"
-        default ESP_WIFI_AUTH_WPA2_PSK
+        config AWS_MQTT_NETWORK_BUFFER_SIZE
+        int "AWS MQTT network buffer size"
+        default 2048
         help
-            The weakest authmode to accept in the scan mode.
-            This value defaults to ESP_WIFI_AUTH_WPA2_PSK incase password is present and ESP_WIFI_AUTH_OPEN is used.
-            Please select ESP_WIFI_AUTH_WEP/ESP_WIFI_AUTH_WPA_PSK incase AP is operating in WEP/WPA mode.
+            MQTTcore network buffer size
 
-        config ESP_WIFI_AUTH_OPEN
-            bool "OPEN"
-        config ESP_WIFI_AUTH_WEP
-            bool "WEP"
-        config ESP_WIFI_AUTH_WPA_PSK
-            bool "WPA PSK"
-        config ESP_WIFI_AUTH_WPA2_PSK
-            bool "WPA2 PSK"
-        config ESP_WIFI_AUTH_WPA_WPA2_PSK
-            bool "WPA/WPA2 PSK"
-        config ESP_WIFI_AUTH_WPA3_PSK
-            bool "WPA3 PSK"
-        config ESP_WIFI_AUTH_WPA2_WPA3_PSK
-            bool "WPA2/WPA3 PSK"
-        config ESP_WIFI_AUTH_WAPI_PSK
-            bool "WAPI PSK"
-    endchoice
+        config AWS_MQTT_CORE_PROCESS_LOOP_TIMEOUT_MS
+        int "AWS MQTTcore process loop timeout"
+        default 1000
+        help
+            Timeout for MQTT_ProcessLoop function in milliseconds.
 
+        config AWS_IOT_ENDPOINT
+        string "AWS IoT endpoint"
+        default ""
+        help
+            URL of the AWS IoT endpoint
+
+        config AWS_MQTT_PORT
+        int "AWS MQTT port number"
+        default 443
+        help
+            Provider port of AWS MQTT
+
+        config AWS_IOT_MQTT_ALPN
+        string "AWS IoT MQTT Alpn setting"
+        default ""
+        help
+            Refer to https://aws.amazon.com/blogs/iot/mqtt-with-tls-client-authentication-on-port-443-why-it-is-useful-and-how-it-works/        
+    
+        config AWS_MQTT_CLIENT_IDENTIFIER
+        string "AWS IoT MQTT client identifier"
+        default ""
+        help 
+            MQTT client identifier
+
+        config AWS_MQTT_KEEP_ALIVE_INTERVAL_SECONDS
+        int "AWS MQTT keep alive interval seconds"
+        default 60
+        help
+            The maximum time interval in seconds which is allowed to elapse between two Control Packets.
+        
+        config AWS_MQTT_CONNACK_RECV_TIMEOUT_MS
+        int "AWS MQTT connack receive timeout [ms]"
+        default 1000
+        help
+            Timeout for receiving CONNACK packet in milli seconds.
+    endmenu
+
+    menu "TLS Configuration"
+        config TLS_NETWORK_TIMEOUT_MS
+        int "TLS network timeout threshold"
+        default 10000
+        help
+            Set to "esp_tls_config" 
+    endmenu
 endmenu
