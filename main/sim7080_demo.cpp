@@ -251,7 +251,7 @@ static void AWS_MQTT_SendDemo( MQTTConnection* conn )
     while(1){
         MQTTConnection::State state = conn->GetState();
         int64_t current_time_ms = GetCurrentTimeMs();
-        s_Logger.Debug( "CurrentState [%d]", state );
+        //s_Logger.Debug( "CurrentState [%d]", state );
 
         if( state == MQTTConnection::STATE_DISCONNECTED ){
             s_Logger.Info( "TLS retry connect invoked." );
@@ -261,7 +261,7 @@ static void AWS_MQTT_SendDemo( MQTTConnection* conn )
 
         }
         else if( state == MQTTConnection::STATE_CONNECTED ){
-            s_Logger.Debug( "MQTTConnected." );
+            //s_Logger.Debug( "MQTTConnected." );
             int64_t pubdata_elapsed_time_ms = current_time_ms - pubdata_prev_time_ms;
             if( pubdata_elapsed_time_ms >= 10000 ){
                 MQTTPubData pubdata = { "tempareture", "25.0" };
@@ -286,14 +286,8 @@ static void AWS_MQTT_ConnTask( void* parameter )
     ThreadParam<MQTTConnection*>* param = reinterpret_cast<ThreadParam<MQTTConnection*>*>(parameter);
     MQTTConnection* conn = param->value;
 
-    int print = 0;
     while( conn->GetState() != MQTTConnection::STATE_ERROR ){
         conn->EventLoop();
-        if( ++print >= 50 ){
-            s_Logger.Debug( "AWS_MQTT_ConnTask" );
-            print = 0;
-        }
-        vTaskDelay( pdMS_TO_TICKS(10) );
     }
 
     param->join = true;

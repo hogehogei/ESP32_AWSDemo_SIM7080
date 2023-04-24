@@ -3,6 +3,7 @@
 #include "util/Logger.hpp"
 #include "interface/InterfaceUserImpl.hpp"
 
+#include "freertos/task.h"
 
 // 
 // constant variables
@@ -243,13 +244,14 @@ void MQTTConnection::awsMQTTCoreProcessLoopWithTimeOut()
     current_time_ms = m_MQTTContext.getTime();
     mqtt_process_loop_timeout_ms = current_time_ms + CONFIG_AWS_MQTT_CORE_PROCESS_LOOP_TIMEOUT_MS;
 
-    s_Logger.Info( "Process Loop start." );
+    //s_Logger.Info( "Process Loop start." );
     // Call MQTT_ProcessLoop multiple times a timeout happens, or
     // MQTT_ProcessLoop fails.
     while( ( current_time_ms < mqtt_process_loop_timeout_ms ) &&
            ( mqtt_status == MQTTSuccess || mqtt_status == MQTTNeedMoreBytes ) )
     {
         mqtt_status = MQTT_ProcessLoop( &m_MQTTContext );
+        vTaskDelay( pdMS_TO_TICKS(10) );
         current_time_ms = m_MQTTContext.getTime();
     }
 
@@ -367,7 +369,7 @@ void MQTTConnection::sendPublishQueue()
 {
     MQTTStatus_t mqtt_status = MQTTSuccess;
 
-    s_Logger.Debug( "sendPublishQueue" );
+    //s_Logger.Debug( "sendPublishQueue" );
     if( m_SendPubQueue.Get() == true ){
         LockGuard mutex_lock( m_PubQueueMutex );
         if( !m_PubDataQueue.empty() ){
