@@ -15,6 +15,7 @@
 #include "aws/AWSMqtt.hpp"
 #include "aws/ExponentialBackOff.hpp"
 #include "util/Logger.hpp"
+#include "bme280/bme280.hpp"
 
 using namespace esp_modem;
 
@@ -41,9 +42,12 @@ extern "C"{
 #endif
 
 static Logger s_Logger = { "AWS_LTE_DEMO" , Logger::L_Debug };
-static EventGroupHandle_t event_group = NULL;
+static EventGroupHandle_t event_group = nullptr;
+static BME280::BME280* s_BME280 = nullptr;
 static const int CONNECT_BIT = BIT0;
 static const int GOT_DATA_BIT = BIT2;
+
+static const int I2C_MASTER_PORT = 0;
 
 extern const uint8_t aws_root_ca_pem_start[] asm("_binary_aws_root_ca_pem_start");
 extern const uint8_t aws_root_ca_pem_end[] asm("_binary_aws_root_ca_pem_end");
@@ -114,6 +118,17 @@ void app_main(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &on_ip_event, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(NETIF_PPP_STATUS, ESP_EVENT_ANY_ID, &on_ppp_changed, NULL));
+
+    /* Intiialize i2c for temperature monitor*/
+    i2c_port_t master_port = I2C_MASTER_PORT;
+    assert( BME280::Initialize_i2c(&master_port) );
+    // Create i2c device
+    BME280::i2c_IO i2c_io;
+    i2c_io.slave = BME280::sk_SlaveAddr;
+    i2c_io.i2cPort = master_port;
+    s_BME280 = new BME280::BME280( i2c_io );
+    assert( s_BME280->Initialize() );
+    assert( s_BME280->ReadChipId() == BME280::sk_ChipId );
 
     /* Configure the PPP netif */
     esp_modem_dce_config_t dce_config = ESP_MODEM_DCE_DEFAULT_CONFIG( CONFIG_EXAMPLE_MODEM_PPP_APN );
@@ -245,6 +260,8 @@ static void AWS_MQTT_SendDemo( MQTTConnection* conn )
 {
     // main loop
     int64_t pubdata_prev_time_ms = GetCurrentTimeMs();
+    BME280::CompensationData compdata;
+    s_BME280->ReadCompensation( &compdata );
 
     s_Logger.Info( "AWS_MQTT_SendDemo() invoked. conneciton handle[%p]", conn );
 
@@ -264,10 +281,17 @@ static void AWS_MQTT_SendDemo( MQTTConnection* conn )
             //s_Logger.Debug( "MQTTConnected." );
             int64_t pubdata_elapsed_time_ms = current_time_ms - pubdata_prev_time_ms;
             if( pubdata_elapsed_time_ms >= 10000 ){
-                MQTTPubData pubdata = { "tempareture", "25.0" };
-                conn->Publish( pubdata );
-                s_Logger.Info( "Publish data topic=[%s], data=[%s]", pubdata.Topic().c_str(), pubdata.Data().c_str() );
-                pubdata_prev_time_ms = GetCurrentTimeMs();
+                
+                BME280::EnvData envdata;
+                char buf[32];
+                if( s_BME280->ReadEnvMeasured( &envdata ) ){
+                    float temperature = BME280::CalcTemperature( compdata.temperature, envdata.temperature );
+                    sprintf( buf, "%.1f", temperature );
+                    MQTTPubData pubdata = { "tempareture", buf };
+                    conn->Publish( pubdata );
+                    s_Logger.Info( "Publish data topic=[%s], data=[%s]", pubdata.Topic().c_str(), pubdata.Data().c_str() );
+                    pubdata_prev_time_ms = GetCurrentTimeMs();
+                }
             }
         }
         else if( state == MQTTConnection::STATE_ERROR ){

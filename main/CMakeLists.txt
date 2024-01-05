@@ -2,10 +2,11 @@
 file(GLOB AWS_SRCS aws/*.cpp)
 file(GLOB UTIL_SRCS util/*.cpp)
 file(GLOB INTERFACE_SRCS interface/*.cpp)
+file(GLOB BME280_SRCS bme280/*.cpp)
 file(GLOB COREMQTT_SRCS aws-iot-device-sdk-embedded-C/libraries/standard/coreMQTT/source/*.c)
 file(GLOB BACKOFF_ALG_SRCS aws-iot-device-sdk-embedded-C/libraries/standard/backoffAlgorithm/source/*.c)
 
-set(COMPONENT_SRCS ${AWS_SRCS} ${UTIL_SRCS} ${INTERFACE_SRCS} ${COREMQTT_SRCS} ${BACKOFF_ALG_SRCS} "sim7080_demo.cpp")
+set(COMPONENT_SRCS ${AWS_SRCS} ${UTIL_SRCS} ${INTERFACE_SRCS} ${BME280_SRCS} ${COREMQTT_SRCS} ${BACKOFF_ALG_SRCS} "sim7080_demo.cpp")
 set(COMPONENT_ADD_INCLUDEDIRS 
     "." 
     "setting/"

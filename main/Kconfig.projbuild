@@ -52,6 +52,26 @@ menu "Example Configuration"
         help
             Pin to unlock the SIM
 
+    menu "BME280 Configuration"
+        config BME280_I2C_MASTER_SCL
+            int "BME280 SCL PIN"
+            default 2
+            help 
+                Pin number of BME280 SCL pin.
+        
+        config BME280_I2C_MASTER_SDA
+            int "BME280 SDA PIN"
+            default 1
+            help 
+                Pin number of BME280 SDA pin.
+        
+        config BME280_TIMEOUT_TICKS
+            int "BME280 i2c timeout ticks"
+            default 1000
+            help
+                Maximum ticks to wait before issuing a timeout.
+    endmenu
+
     menu "UART Configuration"
         config EXAMPLE_MODEM_UART_TX_PIN
             int "TXD Pin Number"
